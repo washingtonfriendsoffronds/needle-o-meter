@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Needle-o-Meter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Righteous&display=swap" rel="stylesheet">
+<style>
+/* VOICE: deadpan pride in useless precision, 1962 World's Fair cheer
+   IDEA: a World's Fair souvenir gauge — the Needle as a ruler you stand beside
+   PICTURE: the Space Needle drawn to true scale on an altitude axis, with a "you" line across it
+   COLOUR and TYPE: sky-blue ground, Galaxy Gold halo, beacon red; Righteous display + Outfit text
+   LAYOUT: readout left, Needle gauge right; on phones title, readout, gauge, controls */
+:root{color-scheme:light dark;
+--bg:light-dark(#d6ecff,#0a1630);--ink:light-dark(#0c2238,#eaf2ff);--mute:light-dark(#46607a,#a3b6d2);
+--panel:light-dark(#ffffff,#13254a);--line:light-dark(#b4d3ee,#2a4272);
+--gold:light-dark(#d06f12,#f5a043);--red:#e4002b;--needle:light-dark(#fbfdff,#dfe7f3);--edge:light-dark(#6f87a1,#9db0cc);
+--ground:light-dark(#a7c0d6,#1b2d55)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Outfit,system-ui,sans-serif;overflow-x:clip}
+.band{padding:clamp(22px,4vw,56px) max(5vw,16px)}
+.wrap{max-width:1240px;margin:0 auto}
+h1,h2,.big,.pill{font-family:Righteous,Outfit,sans-serif;font-weight:400}
+h1{font-size:clamp(32px,5vw,46px);line-height:1.05;margin:0 0 6px;text-wrap:balance}
+h2{font-size:20px;margin:0 0 12px}
+.sub{margin:0;color:var(--mute);max-width:60ch}
+.top{padding-bottom:0}
+.hero .wrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:clamp(16px,3vw,40px);align-items:stretch}
+.read{background:var(--panel);border-radius:22px;padding:clamp(20px,3vw,34px);display:flex;flex-direction:column;gap:10px;box-shadow:0 1px 0 var(--line)}
+.where{font-weight:600;color:var(--mute)}
+.big{font-size:clamp(60px,11vw,104px);line-height:1;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.big .u{font-size:.36em;color:var(--gold)}
+.dir{color:var(--mute)}
+.verdict{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:6px;font-size:17px;font-weight:600}
+.pill{font-size:28px;padding:4px 16px;border-radius:999px;background:var(--gold);color:#fff;letter-spacing:.02em}
+.pill.below{background:var(--ink);color:var(--bg)}
+.vsub{margin:0;color:var(--mute)}
+.quip{margin:4px 0 0;font-size:17px}
+.gps{margin:auto 0 0;font-size:13px;color:var(--mute);min-height:1.5em}
+.fig{position:relative;min-height:400px;background:linear-gradient(var(--bg),var(--panel));border-radius:22px;overflow:hidden;box-shadow:inset 0 0 0 1px var(--line)}
+.fig>svg{position:absolute;inset:0;width:100%;height:100%}
+svg text{font:12px Outfit,sans-serif;fill:var(--mute)}
+svg .yl{fill:var(--ink);font-weight:600;font-size:13px}
+.gr{fill:var(--ground)}.sl{stroke:var(--edge);stroke-dasharray:3 4}
+.nd{fill:var(--needle);stroke:var(--edge);stroke-width:1.2;stroke-linejoin:round}
+.lg{stroke:var(--edge);stroke-width:1}.hl{fill:var(--gold)}.sp{stroke:var(--edge);stroke-width:2}
+.bc{fill:var(--red);animation:blink 1.6s steps(1) infinite}
+.you{stroke:var(--gold);stroke-width:2;stroke-dasharray:6 5}.yd{fill:var(--gold);stroke:var(--panel);stroke-width:3}
+@keyframes blink{50%{opacity:.15}}
+@media(prefers-reduced-motion:reduce){.bc{animation:none}}
+.ctl .wrap{display:grid;gap:14px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+button,input{font:inherit;font-size:16px;color:inherit}
+button{min-height:44px;border-radius:999px;border:1px solid var(--line);background:var(--panel);padding:0 18px;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.primary{background:var(--gold);border-color:var(--gold);color:#fff;font-weight:600}
+.seg{display:flex}.seg button{border-radius:0}.seg button:first-child{border-radius:999px 0 0 999px}.seg button:last-child{border-radius:0 999px 999px 0;margin-left:-1px}
+.seg [aria-pressed=true],.chip[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+form{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;gap:10px;align-items:end}
+label{display:grid;gap:4px;font-size:13px;color:var(--mute)}
+input{min-height:44px;border-radius:12px;border:1px solid var(--line);background:var(--panel);padding:0 12px;width:100%}
+.hint,.err{font-size:13px;color:var(--mute);margin:0}.err{color:var(--red)}
+.stats .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.stat{background:var(--panel);border-radius:18px;padding:16px 18px}
+.stat b{display:block;font-family:Righteous,sans-serif;font-weight:400;font-size:28px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat span{font-size:13px;color:var(--mute)}
+.foot{font-size:13px;color:var(--mute);padding-top:0}
+.foot p{margin:0 0 6px;max-width:80ch}
+@media(max-width:760px){.hero .wrap{grid-template-columns:minmax(0,1fr)}.fig{min-height:360px}}
+@media(max-width:600px){form{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}form button{grid-column:1/-1}}
+</style>
+</head>
+<body>
+<header class="band top"><div class="wrap">
+  <h1>Needle-o-Meter</h1>
+  <p class="sub">How far you are from the Space Needle, and whether you're above or below it. Completely useless. Very precise.</p>
+</div></header>
+
+<main class="band hero"><div class="wrap">
+  <section class="read" aria-live="polite">
+    <div class="where" id="where"></div>
+    <div class="big"><span id="dist">–</span><span class="u" id="distU"></span></div>
+    <div class="dir" id="dir"></div>
+    <div class="verdict"><span class="pill" id="pill">?</span><span id="vtext"></span></div>
+    <p class="vsub" id="vsub"></p>
+    <p class="quip" id="quip"></p>
+    <p class="gps" id="gps"></p>
+  </section>
+  <div class="fig"><svg id="svg" role="img" aria-label="The Space Needle drawn to scale, with a line showing your altitude"></svg></div>
+</div></main>
+
+<section class="band ctl"><div class="wrap">
+  <div class="row">
+    <button id="live" class="primary">Track me live</button>
+    <div class="seg" role="group" aria-label="Units">
+      <button id="uImp" aria-pressed="true">mi · ft</button><button id="uMet" aria-pressed="false">km · m</button>
+    </div>
+  </div>
+  <h2>Or try a spot</h2>
+  <div class="chips" id="chips"></div>
+  <form id="manual" novalidate>
+    <label>Latitude<input id="fLat" inputmode="decimal" placeholder="47.6062"></label>
+    <label>Longitude<input id="fLon" inputmode="decimal" placeholder="-122.3321"></label>
+    <label><span id="fElevL">Elevation (ft)</span><input id="fEl" inputmode="decimal" placeholder="200"></label>
+    <button type="submit">Measure</button>
+  </form>
+  <p class="hint">Tip: long-press any spot in a maps app to copy its coordinates.</p>
+  <p class="err" id="ferr" role="alert"></p>
+</div></section>
+
+<section class="band stats"><div class="wrap">
+  <h2>Useless statistics</h2>
+  <div class="grid" id="stats"></div>
+</div></section>
+
+<footer class="band foot"><div class="wrap">
+  <p>Space Needle: 47.6205° N, 122.3493° W · 605 ft tall · base about 164 ft above sea level, so the tip is about 769 ft. The base elevation and preset elevations are approximate.</p>
+  <p>GPS altitude is often off by 30 ft or more, and some phones report height above the ellipsoid rather than sea level (around Seattle that reads roughly 75 ft low). Proceed with appropriate unseriousness.</p>
+</div></footer>
+
+<script>
+{
+const N={lat:47.6205,lon:-122.3493,base:164,deck:520,h:605};
+const TIP=N.base+N.h, FT=3.28084;
+const P=[
+  {n:"Space Needle observation deck",lat:47.6205,lon:-122.3493,e:684},
+  {n:"Pike Place Market",lat:47.6097,lon:-122.3422,e:110},
+  {n:"Kerry Park",lat:47.6295,lon:-122.3600,e:300},
+  {n:"Sea-Tac Airport",lat:47.4502,lon:-122.3088,e:433},
+  {n:"Mount Rainier summit",lat:46.8523,lon:-121.7603,e:14410},
+  {n:"Times Square",lat:40.7580,lon:-73.9855,e:50},
+  {n:"Badwater Basin, Death Valley",lat:36.2297,lon:-116.7697,e:-282},
+  {n:"Mount Everest summit",lat:27.9881,lon:86.9250,e:29032}
+];
+const $=id=>document.getElementById(id);
+const store={get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+let imp=store.get("nm-imp")!==false;
+let cur=store.get("nm-cur")||{...P[1],i:1};
+let watch=null;
+
+const rad=d=>d*Math.PI/180;
+function distMi(a,b){const R=3958.8,dLat=rad(b.lat-a.lat),dLon=rad(b.lon-a.lon);
+  const h=Math.sin(dLat/2)**2+Math.cos(rad(a.lat))*Math.cos(rad(b.lat))*Math.sin(dLon/2)**2;
+  return 2*R*Math.asin(Math.min(1,Math.sqrt(h)))}
+function bearing(a,b){const p1=rad(a.lat),p2=rad(b.lat),dl=rad(b.lon-a.lon);
+  const t=Math.atan2(Math.sin(dl)*Math.cos(p2),Math.cos(p1)*Math.sin(p2)-Math.sin(p1)*Math.cos(p2)*Math.cos(dl));
+  return (t*180/Math.PI+360)%360}
+const CMP=["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
+const cmp=b=>CMP[Math.round(b/22.5)%16];
+const num=n=>n<10?n.toFixed(1):Math.round(n).toLocaleString();
+const fmtH=ft=>imp?`${Math.round(Math.abs(ft)).toLocaleString()} ft`:`${Math.round(Math.abs(ft)/FT).toLocaleString()} m`;
+function distParts(mi){
+  if(imp) return mi<0.1?[Math.round(mi*5280).toLocaleString(),"ft"]:[num(mi),"mi"];
+  const km=mi*1.609344; return km<0.1?[Math.round(km*1000).toLocaleString(),"m"]:[num(km),"km"];
+}
+function dur(min){
+  if(min<1) return "under a minute";
+  if(min<90) return `${Math.round(min)} min`;
+  if(min<2880) return `${(min/60).toFixed(1)} hours`;
+  if(min<525600) return `${Math.round(min/1440).toLocaleString()} days`;
+  return `${(min/525600).toFixed(1)} years`;
+}
+function quip(mi,e){
+  let q= mi<0.03?"You are, for all practical purposes, at the Space Needle."
+    : mi<1?"Close enough to walk. Look up."
+    : mi<15?"Same city, same drizzle."
+    : mi<150?"Still within Needle day-trip range."
+    : mi<1500?"The Needle is a distant, pointy rumor."
+    : mi<6000?"You are impressively far from the Space Needle."
+    : "You are about as far from the Space Needle as Earth allows.";
+  if(e!=null){
+    if(e>TIP+20000) q+=" Also, are you on a plane? Wave at the Needle.";
+    else if(e>TIP) q+=" You're higher than it. Don't let it go to your head.";
+    else if(e<0) q+=" Below sea level. The Needle is concerned.";
+  }
+  return q;
+}
+
+function render(){
+  const mi=distMi(cur,N), b=bearing(cur,N), dft=mi*5280, e=cur.e;
+  const [d,u]=distParts(mi);
+  $("where").textContent=cur.n;
+  $("dist").textContent=d; $("distU").textContent=u;
+  $("dir").textContent= mi<0.01?"from the Space Needle · it's right here":`from the Space Needle · it's to your ${cmp(b)}`;
+  const pill=$("pill");
+  if(e==null){
+    pill.textContent="???";pill.className="pill below";
+    $("vtext").textContent="Your device didn't report an altitude.";
+    $("vsub").textContent="Enter your elevation below to settle it.";
+  }else{
+    const diff=e-TIP, above=diff>0;
+    pill.textContent=above?"ABOVE":"BELOW"; pill.className="pill"+(above?"":" below");
+    $("vtext").textContent=`the tip by ${fmtH(diff)}`;
+    $("vsub").textContent= above?`That's ${num(e/TIP)}× the Needle's tip height above sea level.`
+      : e<N.base?`You're also ${fmtH(N.base-e)} below its front door.`
+      : e>=N.base+N.deck-20?"Roughly observation-deck height. Nice view?"
+      : `That puts you ${fmtH(e-N.base)} up the Needle's height.`;
+  }
+  $("quip").textContent=quip(mi,e);
+  const st=[
+    [num(dft/N.h),"Space Needles, laid end to end"],
+    [dur(dft/800),"riding the Needle's elevator sideways at 800 ft/min"],
+    [dur(mi/3*60),"walking there at 3 mph, ignoring water"],
+    [mi<0.01?"Up":`${Math.round(b)}° ${cmp(b)}`,"point your phone this way"]
+  ];
+  $("stats").innerHTML=st.map(s=>`<div class="stat"><b>${s[0]}</b><span>${s[1]}</span></div>`).join("");
+  document.querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed",String(+c.dataset.i===cur.i)));
+  $("uImp").setAttribute("aria-pressed",String(imp)); $("uMet").setAttribute("aria-pressed",String(!imp));
+  $("fElevL").textContent=imp?"Elevation (ft)":"Elevation (m)";
+  draw();
+}
+
+const svg=$("svg");
+function draw(){
+  const W=svg.clientWidth,H=svg.clientHeight; if(!W||!H) return;
+  const lo=-60,hi=900,pt=26,pb=26,k=(H-pt-pb)/(hi-lo);
+  const y=a=>H-pb-(a-lo)*k, cx=W*0.42, X=f=>cx+f*k, Y=h=>y(N.base+h);
+  const pts=a=>a.map(([f,h])=>`${X(f).toFixed(1)},${Y(h).toFixed(1)}`).join(" ");
+  let s=`<rect class="gr" x="0" y="${y(N.base)}" width="${W}" height="${H}"/>`;
+  s+=`<line class="sl" x1="0" x2="${W}" y1="${y(0)}" y2="${y(0)}"/><text x="8" y="${y(0)-6}">sea level</text>`;
+  if(W>=520){
+    const ticks=imp?[200,400,600,800]:[50,100,150,200,250];
+    ticks.forEach(t=>{const ft=imp?t:t*FT;s+=`<text x="8" y="${y(ft)+4}">${t} ${imp?"ft":"m"}</text>`});
+  }
+  s+=`<polygon class="nd" points="${pts([[-58,0],[-11,360],[-34,500],[34,500],[11,360],[58,0]])}"/>`;
+  s+=`<polyline class="lg" fill="none" points="${pts([[-34,0],[-5,360],[-20,500]])}"/><polyline class="lg" fill="none" points="${pts([[34,0],[5,360],[20,500]])}"/>`;
+  s+=`<line class="lg" x1="${X(0)}" x2="${X(0)}" y1="${Y(0)}" y2="${Y(500)}"/>`;
+  s+=`<polygon class="nd" points="${pts([[-69,516],[-42,500],[42,500],[69,516],[42,532],[-42,532]])}"/>`;
+  s+=`<polygon class="hl" points="${pts([[-62,532],[-34,550],[34,550],[62,532]])}"/>`;
+  s+=`<polygon class="nd" points="${pts([[-22,550],[-14,562],[14,562],[22,550]])}"/>`;
+  s+=`<line class="sp" x1="${X(0)}" x2="${X(0)}" y1="${Y(562)}" y2="${Y(N.h)}"/><circle class="bc" cx="${X(0)}" cy="${Y(N.h)}" r="3.5"/>`;
+  const lx=X(-78);
+  [[N.h,`Tip · ${fmtH(TIP)}`],[N.deck,"Deck"],[0,`Base · ${fmtH(N.base)}`]].forEach(([h,t])=>{
+    s+=`<text x="${lx}" y="${Y(h)+4}" text-anchor="end">${t}</text>`});
+  const e=cur.e;
+  if(e==null){
+    s+=`<text class="yl" x="${W-16}" y="${pt+14}" text-anchor="end">Altitude unknown</text>`;
+  }else{
+    const c=Math.max(lo+15,Math.min(hi-15,e)), yy=y(c), off=e>hi-15?" ↑ off the chart":e<lo+15?" ↓ off the chart":"";
+    s+=`<line class="you" x1="0" x2="${W}" y1="${yy}" y2="${yy}"/><circle class="yd" cx="${W-22}" cy="${yy}" r="8"/>`;
+    const ty=yy-10<pt?yy+22:yy-10;
+    s+=`<text class="yl" x="${W-36}" y="${ty}" text-anchor="end">You · ${fmtH(e)}${e<0?" below sea":""}${off}</text>`;
+  }
+  svg.innerHTML=s;
+}
+const ro=new ResizeObserver(draw); ro.observe(svg);
+
+function setCur(c){cur=c;store.set("nm-cur",c.live?{...c,live:false,n:"Your last live spot"}:c);
+  $("fLat").value=c.lat.toFixed(4);$("fLon").value=c.lon.toFixed(4);
+  $("fEl").value=c.e==null?"":Math.round(imp?c.e:c.e/FT);render()}
+function stopLive(){if(watch!=null){try{navigator.geolocation.clearWatch(watch)}catch(e){}watch=null}$("live").textContent="Track me live"}
+
+$("chips").innerHTML=P.map((p,i)=>`<button class="chip" data-i="${i}" aria-pressed="false">${p.n}</button>`).join("");
+$("chips").addEventListener("click",ev=>{const b=ev.target.closest(".chip");if(!b)return;stopLive();$("gps").textContent="";$("ferr").textContent="";
+  const i=+b.dataset.i;setCur({...P[i],i})});
+
+$("uImp").onclick=()=>{imp=true;store.set("nm-imp",true);setCur(cur)};
+$("uMet").onclick=()=>{imp=false;store.set("nm-imp",false);setCur(cur)};
+
+$("manual").addEventListener("submit",ev=>{ev.preventDefault();
+  const lat=parseFloat($("fLat").value),lon=parseFloat($("fLon").value),el=$("fEl").value.trim();
+  if(!(lat>=-90&&lat<=90)||!(lon>=-180&&lon<=180)){$("ferr").textContent="Latitude must be between -90 and 90, longitude between -180 and 180.";return}
+  const ev2=el===""?null:parseFloat(el);
+  if(el!==""&&!isFinite(ev2)){$("ferr").textContent="Elevation should be a number.";return}
+  $("ferr").textContent="";stopLive();
+  setCur({n:"Custom spot",lat,lon,e:ev2==null?null:(imp?ev2:ev2*FT),i:-1});
+});
+
+$("live").onclick=()=>{
+  if(watch!=null){stopLive();$("gps").textContent="Live tracking stopped.";return}
+  const fail="Location isn't available here. Pick a spot above, or open this page on its own (hosted over https) to use GPS.";
+  if(!("geolocation" in navigator)){$("gps").textContent=fail;return}
+  $("gps").textContent="Asking for your location…";$("live").textContent="Stop tracking";
+  try{
+    watch=navigator.geolocation.watchPosition(p=>{
+      const c=p.coords, manualE=$("fEl").value.trim()===""?null:(imp?+$("fEl").value:+$("fEl").value*FT);
+      const e=c.altitude==null?(isFinite(manualE)?manualE:null):c.altitude*FT;
+      setCur({n:"You, live",lat:c.latitude,lon:c.longitude,e,i:-1,live:true});
+      $("gps").textContent=`Live · position within about ${fmtH(c.accuracy*FT)}`+(c.altitude==null?" · no GPS altitude, using the elevation box":"");
+    },()=>{stopLive();$("gps").textContent=fail},{enableHighAccuracy:true,maximumAge:5000,timeout:20000});
+  }catch(err){stopLive();$("gps").textContent=fail}
+};
+
+setCur(cur);
+}
+</script>
+</body>
+</html>
